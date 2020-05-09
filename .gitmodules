@@ -1,3 +1,6 @@
 [submodule "external/ur/urcap-custom-api"]
 	path = external/ur/urcap-custom-api
 	url = https://github.com/BomMadsen/URCap-CustomAPI.git
+[submodule "external/ur/hello-world-swing"]
+	path = external/ur/hello-world-swing
+	url = https://github.com/UniversalRobots/HelloWorldSwing.git

@@ -115,6 +115,13 @@ function setup_ur_tools () {
   fi
   echo "done!"
 
+  echo -n "downloading /URCaps tutorial Swing..."
+  if ! wget -c https://plus.universal-robots.com/media/1810567/urcap_tutorial_swing.pdf &>/dev/null; then
+    echo "download error."
+    return 1
+  fi
+  echo "done!"
+
   build_ur_image "${ur_sim_path}" "${ur_sdk_path}" "it.unibz.smf" || exit 1
 
   rm -rf "${ur_sim_path}" "${ur_sdk_path}"
