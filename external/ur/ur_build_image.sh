@@ -10,13 +10,13 @@ function setup_ur_sim() {
   local sim_path="URSim_Linux-${1}"
   local sim_file="${sim_path}.tar.gz"
 
-  if ! wget -c "https://s3-eu-west-1.amazonaws.com/ur-support-site/42165/${sim_file}" &>/dev/null; then
+  if ! wget -c "https://s3-eu-west-1.amazonaws.com/ur-support-site/66364/${sim_file}" &>/dev/null; then
     echo "download error."
     return 1
   fi
 
-  sim_path=$(tar -tvf "${sim_file}"|sed -e's/.*\(ursim.*\).tar.gz/\1/')
-  if ! tar --to-command="tar -xzvf -" -xzf "${sim_file}" &>/dev/null; then
+  sim_path=$(tar -tzvf "${sim_file}"|sed -n -e'0,/ursim/ s#.*\(\./ursim[^/]*\)/.*#\1#p')
+  if ! tar -xzvf "${sim_file}" &>/dev/null; then
     echo "decompression error."
     return 1
   fi
@@ -88,10 +88,10 @@ function build_ur_image() {
 }
 
 function setup_ur_tools () {
-  local ur_sim_version="3.6.1"
+  local ur_sim_version="3.12.1.90940"
   local ur_sim_path
 
-  local ur_sdk_version="1.3.55"
+  local ur_sdk_version="1.9.0"
   local ur_sdk_path
 
   echo -n "retrieving UR SIM... "

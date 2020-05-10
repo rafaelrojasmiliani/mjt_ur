@@ -66,6 +66,8 @@ RUN echo "alias urcap_new='/opt/${mysdk}/newURCap.sh'" >> /home/${myuser}/.bashr
     echo "alias ursim_run_ur3='/opt/${mysim}/start-ursim.sh UR3'" >> /home/${myuser}/.bashrc; \
     echo "alias ursim_run_ur5='/opt/${mysim}/start-ursim.sh UR5'" >> /home/${myuser}/.bashrc; \
     echo "alias ursim_run_ur10='/opt/${mysim}/start-ursim.sh UR10'" >> /home/${myuser}/.bashrc; \
+    sudo -i -u ${myuser} git config --global alias.dpull '! git pull && git submodule update --init --recursive'; \
+    sudo -i -u ${myuser} git config --global alias.pfetch 'fetch --prune --all'; \
     sed -i -e's/\(mygroupid=\)".*"/\1'${mycompany}'/g' /opt/${mysdk}/newURCap.sh; \
     echo "sed -i -e's#\(<ursim.home>\)\(</ursim.home>\)#"'\\1'"/opt/${mysim}"'\\2'"#g' \${mypackage}/pom.xml" >> /opt/${mysdk}/newURCap.sh
 

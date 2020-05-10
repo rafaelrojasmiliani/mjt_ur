@@ -4,3 +4,6 @@
 [submodule "external/ur/hello-world-swing"]
 	path = external/ur/hello-world-swing
 	url = https://github.com/UniversalRobots/HelloWorldSwing.git
+[submodule "external/ur/ellipse-swing"]
+	path = external/ur/ellipse-swing
+	url = https://github.com/UniversalRobots/EllipseSwing.git
