@@ -7,3 +7,6 @@
 [submodule "external/ur/ellipse-swing"]
 	path = external/ur/ellipse-swing
 	url = https://github.com/UniversalRobots/EllipseSwing.git
+[submodule "external/ur/urcap-rtci"]
+	path = external/ur/urcap-rtci
+	url = https://github.com/BomMadsen/URCap-getRobotData.git
