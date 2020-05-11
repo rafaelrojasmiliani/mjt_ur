@@ -108,15 +108,22 @@ function setup_ur_tools () {
   fi
   echo "done!"
 
-  echo -n "downloading /URCaps tutorial HTML..."
+  echo -n "downloading /URCaps tutorial HTML... "
   if ! wget -c https://plus.universal-robots.com/media/1810566/urcap_tutorial_html.pdf &>/dev/null; then
     echo "download error."
     return 1
   fi
   echo "done!"
 
-  echo -n "downloading /URCaps tutorial Swing..."
+  echo -n "downloading /URCaps tutorial Swing... "
   if ! wget -c https://plus.universal-robots.com/media/1810567/urcap_tutorial_swing.pdf &>/dev/null; then
+    echo "download error."
+    return 1
+  fi
+  echo "done!"
+
+  echo -n "downloading URScript manual... "
+  if ! wget -c https://s3-eu-west-1.amazonaws.com/ur-support-site/62056/scriptManual.pdf &>/dev/null; then
     echo "download error."
     return 1
   fi

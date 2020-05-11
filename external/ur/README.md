@@ -39,8 +39,9 @@ This will:
 
 1. download the URSim package,
 2. download the SDK package,
-3. download the URCaps tutorial in `pdf` format (both HTML and Swing based design),
-4. trigger the generation of the Docker image based on the provided Dockerfile.
+3. download the URCaps tutorial in `pdf` format (both HTML and Swing based designs),
+4. download the URScript manual in `pdf` format.
+5. trigger the generation of the Docker image based on the provided Dockerfile.
 
 If no errors will be encountered during the execution there should be three new files on the directory:
 
