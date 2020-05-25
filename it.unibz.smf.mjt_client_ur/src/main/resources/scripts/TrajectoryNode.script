@@ -1,0 +1,16 @@
+mjt_trajectory_reset("${UNIQUE_ID}")
+
+movej(${TRAJECTORY_FIRST_WAYPOINT})
+
+q = get_actual_joint_positions()
+qp = get_actual_joint_speeds()
+u = mjt_trajectory_eval("${UNIQUE_ID}", q, qp)
+while u[0] == u[0]:
+  speedj([u[0], u[1], u[2], u[3], u[4], u[5]], ${TRAJECTORY_MAX_ACCELERATION}, ${TRAJECTORY_SAMPLING_TIME})
+  q = get_actual_joint_positions()
+  qp = get_actual_joint_speeds()
+  u = mjt_trajectory_eval("${UNIQUE_ID}", q, qp)
+end
+
+movej(${TRAJECTORY_LAST_WAYPOINT})
+stopj(${TRAJECTORY_MAX_ACCELERATION})

@@ -1,116 +1,111 @@
 package it.unibz.smf.mjt_client_ur.impl;
 
 import com.ur.urcap.api.domain.data.DataModel;
+import com.ur.urcap.api.domain.userinteraction.inputvalidation.InputValidator;
+import com.ur.urcap.api.domain.userinteraction.keyboard.KeyboardInputFactory;
+import com.ur.urcap.api.domain.userinteraction.keyboard.KeyboardTextInput;
+import com.ur.urcap.api.domain.value.jointposition.JointPositions;
 
-import com.ur.urcap.api.ui.component.ImgComponent;
-import com.ur.urcap.api.ui.component.InputButton;
-import com.ur.urcap.api.ui.component.InputCheckBox;
-import com.ur.urcap.api.ui.component.InputEvent;
-import com.ur.urcap.api.ui.component.InputTextField;
-
-import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.InputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.util.Collections;
-import java.util.Map;
-import java.util.HashMap;
-import javax.imageio.ImageIO;
+import java.nio.charset.StandardCharsets;
+import java.util.Properties;
 
 public class Common {
-	// IDs of common interactive HTML elements
-	// (university and laboratory logos)
-	public static final String UNIBZ = "UNIBZ";
-	public static final String SMF = "SMF";
+  // IDs of common data
+  // -- server info
+  public static final String SERVICE_HOSTNAME = "service_hostname";
+  public static final String SERVICE_PORT_NUMBER = "service_port_number";
+  // -- proxy info
+  public static final String PROXY_HOSTNAME = "proxy_hostname";
+  public static final String PROXY_PORT_NUMBER = "proxy_port_number";
+  // -- services names
+  public static final String SERVICE_RPC_PATH = "service_rpc_path";
+  public static final String SERVICE_GENERATE = "service_generate";
+  public static final String SERVICE_LOAD = "service_load";
+  // -- trajectory generation data
+  public static final String TRAJECTORY_MIN_WAYPOINTS = "trajectory_min_waypoints";
+  public static final String TRAJECTORY_MAX_SPEED = "trajectory_max_speed";
+  public static final String TRAJECTORY_MAX_ACCELERATION = "trajectory_max_acceleration";
+  public static final String TRAJECTORY_SAMPLING_TIME = "trajectory_sampling_time";
+  public static final String TRAJECTORY_EXECUTION_TIME = "trajectory_execution_time";
+  public static final String TRAJECTORY_REGULARIZATION_FACTOR = "trajectory_regularization_factor";
+  public static final String TRAJECTORY_BASIS_TYPE = "trajectory_basis_type";
+  public static final String TRAJECTORY = "trajectory";
+  // -- waypoint data
+  public static final String WAYPOINT_POSITIONS = "waypoint_positions";
+  // -- trajectory follower gains
+  public static final String CONTROL_GAIN_PROPORTIONAL = "control_gain_proportional";
+  public static final String CONTROL_GAIN_DERIVATIVE = "control_gain_derivative";
+  public static final String CONTROL_EPS = "control_eps";
+  // -- operator's data
+  public static final String OPERATOR_VECTOR = "operator_vector";
+  // -- resources
+  public static final String LOGO_UNIBZ = "/media/unibz.png";
+  public static final String LOGO_SMF = "/media/smf.png";
+  public static final String URCAP_PROPERTIES = "/urcap.properties";
+  public static final String URSCRIPT_INSTALLATION = "/scripts/InstallationNode.script";
+  public static final String URSCRIPT_TRAJECTORY = "/scripts/TrajectoryNode.script";
+  public static final String PROXY_RESOURCE_FOLDER = "/proxy/";
+  public static final String PROXY_EXECUTABLE = "/proxy/XmlRpcProxy.py";
+  // -- nodes data
+  public static final String NODE_ID = "node_id";
+  public static final String NODE_HASH = "node_hash";
+  public static final String UNIQUE_ID = "unique_id";
+  public static final String IS_DEFINED = "is_defined";
 
-	// IDs of interactive installation HTML elements
-	// (client configuration: server info and controller gains)
-	public static final String SERVER_IP = "SERVER_IP";
-	public static final String SERVER_PORT = "SERVER_PORT";
-	public static final String CONTROL_KP = "CONTROL_KP";
-	public static final String CONTROL_KV = "CONTROL_KV";
-	public static final String CONTROL_KA = "CONTROL_KA";
-	public static final String SAMPLING_TIME = "SAMPLING_TIME";
+  public static interface ChildWaypointAPI {
+    public JointPositions getJointPositions();
+  }
 
-	// IDs of interactive installation HTML elements
-	// (user consent and client activation/deactivation)
-	public static final String CONSENT = "CONSENT";
-	public static final String ENABLE = "ENABLE";
-	public static final String DISABLE = "DISABLE";
+  public static KeyboardTextInput getKeyboardInput(final KeyboardInputFactory keyboardInputFactory, final InputValidator validator) {
+    return keyboardInputFactory.createStringKeyboardInput().setErrorValidator(validator);
+  }
 
-	// IDs of interactive program HTML elements
-	// (program actions)
-	public static final String ADD_WAYPOINT = "ADD_WAYPOINT";
-	public static final String GENERATE_PLAN = "GENERATE_PLAN";
-	public static final String RESET_PLAN = "RESET_PLAN";
-
-	// IDs of interactive program HTML elements
-	// (program input/output interfaces)
-	public static final String PROGRAM_NAME = "PROGRAM_NAME";
-	public static final String PROGRAM_DISABLED = "PROGRAM_DISABLED";
-
-	// IDs of planning samples (dictionary elements)
-	public static final int MIN_WAYPOINTS = 3;
-	public static final String WAYPOINTS = "WAYPOINTS";
-	public static final String TEMPLATE = "WP%03d";
-	public static final String TRAJECTORY = "TRAJECTORY";
-	public static final String PATH = "PATH";
-
-	// default values of installation and program elements
-	public static final Map<String, String> VALUES;
-    static {
-        Map<String, String> values = new HashMap<String, String>();
-		values.put(SERVER_IP, "10.10.238.1");
-		values.put(SERVER_PORT, "5000");
-		values.put(CONTROL_KP, "0.0");
-		values.put(CONTROL_KV, "0.0");
-		values.put(CONTROL_KA, "10.0");
-		values.put(SAMPLING_TIME, "0.008");
-		values.put(PROGRAM_NAME, "Trajectory");
-		VALUES = Collections.unmodifiableMap(values);
+  public static BufferedReader loadResource(final InputStream src) {
+    try {
+      return new BufferedReader(new InputStreamReader(src, StandardCharsets.UTF_8.name()));
+    } catch (Exception e) {
+      return null;
     }
+  }
 
-	// load images from a given path
-	public static BufferedImage loadImage(InputStream _imgStream) {
-		BufferedInputStream bufferedInputStream = null;
-		BufferedImage bufferedImage = null;
-		try {
-			bufferedInputStream = new BufferedInputStream(_imgStream);
-			bufferedImage = ImageIO.read(bufferedInputStream);
-		} catch (IOException e) {
-			System.err.println("[mjt-client-ur] unable to load image");
-		} finally {
-			if (null != bufferedImage) {
-				try {
-					if(null != bufferedInputStream) {
-						bufferedInputStream.close();
-					}
-				} catch (IOException e) {
-					System.err.println("[mjt-client-ur] failed to close image input stream " + e.getMessage());
-				}
-			}
-		}
-		return bufferedImage;
-	}
+  public static BufferedReader loadInstallationScript() {
+    return loadResource(Common.class.getClassLoader().getResourceAsStream(URSCRIPT_INSTALLATION));
+  }
 
-	// wrapper function to retrieve data from the model dictionary,
-	// providing a default value when the entry is not defined
-	public static String getModelValue(DataModel _model, String _key) {
-		return _model.get(_key, VALUES.get(_key));
-	}
+  public static BufferedReader loadTrajectoryScript() {
+    return loadResource(Common.class.getClassLoader().getResourceAsStream(URSCRIPT_TRAJECTORY));
+  }
 
-	// wrapper funtion to insert/update entries inside the given model
-	// dictionary based on the HTML input element text
-	public static void setModelValue(DataModel _model, InputEvent _event, String _key, InputTextField _input) {
-		if (_event.getEventType() == InputEvent.EventType.ON_CHANGE) {
-			if ("".equals(_input.getText())) {
-				_model.set(_key, VALUES.get(_key));
-			} else {
-				_model.set(_key, _input.getText());
-			}
-		}
-	}
+  public static String getDefault(final String key) {
+    try {
+      InputStream src = Common.class.getClassLoader().getResourceAsStream(URCAP_PROPERTIES);
+      Properties properties = new Properties();
+      properties.load(src);
+      String value = properties.getProperty(key);
+      src.close();
+      return value;
+    } catch (Exception e) {
+      Swing.error("Properties loader", "Cannot read property " + key + ": " + e.getMessage());
+    }
+    return new String();
+  }
+
+  public static Object getWithDefault(final DataModel model, final String key) {
+    if (key == OPERATOR_VECTOR || key == TRAJECTORY_BASIS_TYPE) {
+      return model.get(key, getDefault(key).split(","));
+    } else {
+      return model.get(key, getDefault(key));
+    }
+  }
+
+  public static void setDefault(final DataModel model, final String key) {
+    if (key == OPERATOR_VECTOR || key == TRAJECTORY_BASIS_TYPE) {
+      model.set(key, getDefault(key).split(","));
+    } else {
+      model.set(key, getDefault(key));
+    }
+  }
 }

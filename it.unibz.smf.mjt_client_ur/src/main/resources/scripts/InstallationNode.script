@@ -1,0 +1,30 @@
+global mjtProxyClient = rpc_factory("xmlrpc", "${PROXY_URL}")
+
+def mjt_control_parameters(Kp, Kd, u_max, eps):
+  result = mjtProxyClient.control_parameters(Kp, Kd, u_max, eps)
+  if not result:
+    textmsg("mjt_control_parameters: failed")
+    halt
+  end
+  textmsg("mjt_control_parameters: updated")
+  return None
+end
+
+def mjt_trajectory_reset(unique_id):
+  result = mjtProxyClient.trajectory_reset(unique_id)
+  if not result:
+    textmsg("mjt_trajectory_reset: failed " + unique_id)
+    halt
+  end
+  textmsg("mjt_trajectory_reset: " + unique_id)
+  return None
+end
+
+def mjt_trajectory_eval(unique_id, q, qp):
+  #textmsg("mjt_trajectory_eval: " + unique_id + ",   current state: (" + to_str(q) + ", " + to_str(qp) + ")")
+  u = mjtProxyClient.trajectory_eval(unique_id, q, qp)
+  #textmsg("mjt_trajectory_eval: " + unique_id + ", control command: (" + to_str([u[0], u[1], u[2], u[3], u[4], u[5]]) + ")")
+  return u
+end
+
+mjt_control_parameters(${CONTROL_GAIN_PROPORTIONAL}, ${CONTROL_GAIN_DERIVATIVE}, ${TRAJECTORY_MAX_SPEED}, ${CONTROL_EPS})

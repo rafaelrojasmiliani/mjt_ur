@@ -27,7 +27,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-fast install -y --no-install-recommends -
     default-jdk default-jre maven dialog sshpass || exit 1
 
 # bash and python3 tab completion
-RUN echo $'\n\
+RUN echo '\n\
 if [ -f /usr/share/bash-completion/bash_completion ]; then\n\
   . /usr/share/bash-completion/bash_completion\n\
 elif [ -f /etc/bash_completion ]; then\n\
