@@ -10,3 +10,6 @@
 [submodule "external/ur/urcap-rtci"]
 	path = external/ur/urcap-rtci
 	url = https://github.com/BomMadsen/URCap-getRobotData.git
+[submodule "external/apache-commons-validator"]
+	path = external/apache-commons-validator
+	url = https://github.com/apache/commons-validator.git
