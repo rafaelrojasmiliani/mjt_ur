@@ -12,10 +12,10 @@ directory | description
 `urcap-custom-api` | Custom API tutorial (as a git submodule).
 `README.md` | this readme file.
 `ur.Dockerfile` | Text document containing all the commands required to assemble the image with the UR tools.
-`ur_build_image.sh` | Script to download the URSim and SDK packages and to build the Docker image.
-`ur_setup.sh` | Shell[^1] configuration file for handling of the Docker container.
+`build_image.sh` | Script to download the URSim and SDK packages and to build the Docker image.
+`setup.sh` | Shell[^1] configuration file for handling of the Docker container.
 
-**NOTE**: these tools have been tested only with the URSim version `3.12.1` and UR SDK version `1.9.0`, different versions may require some adjustments on both the `ur_build_image.sh` script and `ur.Dockerfile` file.
+**NOTE**: these tools have been tested only with the URSim version `3.12.1` and UR SDK version `1.9.0`, different versions may require some adjustments on both the `build_image.sh` script and `ur.Dockerfile` file.
 
 
 ## Dependencies
@@ -32,7 +32,7 @@ directory | description
 It is enough to execute the command:
 
 ```
-./ur_build_image.sh
+./build_image.sh
 ```
 
 This will:
@@ -69,13 +69,13 @@ ur-demo-image     latest                   44f834e16501        2 days ago       
 
 ### Build process customization
 
-The URsim version can be set [here](https://gitlab.inf.unibz.it/smartminifactory/apps/-/blob/master/external/ur/ur_build_image.sh#L91):
-Note that modifying the URSim version may require some different rules [here](https://gitlab.inf.unibz.it/smartminifactory/apps/-/blob/master/external/ur/ur_build_image.sh#L24-34).
+The URsim version can be set [here](https://gitlab.inf.unibz.it/smartminifactory/apps/-/blob/master/external/ur/build_image.sh#L91):
+Note that modifying the URSim version may require some different rules [here](https://gitlab.inf.unibz.it/smartminifactory/apps/-/blob/master/external/ur/build_image.sh#L24-34).
 
-The SDK version can be set [here](https://gitlab.inf.unibz.it/smartminifactory/apps/-/blob/master/external/ur/ur_build_image.sh#L94).
-Note that modifying the SDK version may require some different rules [here](https://gitlab.inf.unibz.it/smartminifactory/apps/-/blob/master/external/ur/ur_build_image.sh#L59-65)
+The SDK version can be set [here](https://gitlab.inf.unibz.it/smartminifactory/apps/-/blob/master/external/ur/build_image.sh#L94).
+Note that modifying the SDK version may require some different rules [here](https://gitlab.inf.unibz.it/smartminifactory/apps/-/blob/master/external/ur/build_image.sh#L59-65)
 
-The company group id can be set [here](https://gitlab.inf.unibz.it/smartminifactory/apps/-/blob/master/external/ur/ur_build_image.sh#L118).
+The company group id can be set [here](https://gitlab.inf.unibz.it/smartminifactory/apps/-/blob/master/external/ur/build_image.sh#L118).
 
 
 ## Handling the Docker container
@@ -83,7 +83,7 @@ The company group id can be set [here](https://gitlab.inf.unibz.it/smartminifact
 It is required to source the setup script:
 
 ```
-source ./ur_setup.sh
+source ./setup.sh
 ```
 
 and after that, the following shell methods will be available:
