@@ -60,6 +60,72 @@ public class TrajectoryProgram implements ProgramNodeContribution {
     }
   }
 
+  private static class TreeWaypoints {
+    private final List<double[]> waypoints = new ArrayList<double[]>();
+    private int invalidChildren = 0;
+    private int uninitializedChildren = 0;
+    private int validChildren = 0;
+
+    public TreeWaypoints(final TreeNode root) {
+      try {
+        for (TreeNode child : root.getChildren()) {
+          if (child.getProgramNode() instanceof URCapProgramNode) {
+            URCapProgramNode urcap = (URCapProgramNode) child.getProgramNode();
+            if (urcap.canGetAs(Common.ChildWaypointAPI.class)) {
+              Common.ChildWaypointAPI waypointNode = urcap.getAs(Common.ChildWaypointAPI.class);
+              if (waypointNode.getJointPositions() != null) {
+                JointPosition[] jointPosition = waypointNode.getJointPositions().getAllJointPositions();
+                double[] waypoint = new double[jointPosition.length];
+                for (int i = 0; jointPosition.length > i; i++) {
+                  waypoint[i] = jointPosition[i].getPosition(Unit.RAD);
+                }
+                waypoints.add(waypoint);
+                validChildren++;
+              } else {
+                uninitializedChildren++;
+              }
+            } else {
+              invalidChildren++;
+            }
+          } else {
+            invalidChildren++;
+          }
+        }
+      } catch (Exception e) {
+        invalidChildren++;
+        Swing.error("Waypoint tree search", "Unexpected error while traversing the trajectory tree: " + e.getMessage());
+      }
+    }
+
+    public boolean isInvalid() {
+      return (invalidChildren > 0) || (uninitializedChildren > 0) || validChildren == 0;
+    }
+
+    public int getNumberOfInvalidChildren() {
+      return invalidChildren;
+    }
+
+    public int getNumberOfUninitializedChildren() {
+      return uninitializedChildren;
+    }
+
+    public int getNumberOfValidChildren() {
+      return validChildren;
+    }
+
+    public double[] getFirstWaypoint() {
+      return waypoints.get(0);
+    }
+
+    public double[] getLastWaypoint() {
+      return waypoints.get(waypoints.size() - 1);
+    }
+
+    public List<double[]> getWaypoints() {
+      return waypoints;
+    }
+  };
+
   private final ProgramAPIProvider apiProvider;
   private final UndoRedoManager undoRedoManager;
   private final TrajectoryProgramView view;
@@ -112,25 +178,22 @@ public class TrajectoryProgram implements ProgramNodeContribution {
   @Override
   public void generateScript(ScriptWriter writer) {
     try {
-      String service = Common.getDefault(Common.SERVICE_LOAD);
-      Object[] params = new Object[]{model.get(Common.UNIQUE_ID, ""), model.get(Common.TRAJECTORY, "")};
-      Boolean response = (Boolean) getInstallation().xmlRpcRequest(service, params);
+      final String service = Common.getDefault(Common.SERVICE_LOAD);
+      final Object[] params = new Object[]{model.get(Common.UNIQUE_ID, ""), model.get(Common.TRAJECTORY, "")};
+      final Boolean response = (Boolean) getInstallation().xmlRpcRequest(service, params);
       if (response != null && response.booleanValue()) {
         writer.appendLine("textmsg(\"mjt_trajectory_load: " + model.get(Common.UNIQUE_ID, "") + "\")");
 
-        List<double[]> waypoints = new ArrayList<double[]>();
-        getWaypoints(waypoints, null, null, null);
-        String firstWaypoint = Arrays.toString(waypoints.get(0));
-        String lastWaypoint = Arrays.toString(waypoints.get(waypoints.size() - 1));
+        final TreeWaypoints treeWaypoints = new TreeWaypoints(getRootTreeNode());
 
         String line;
-        BufferedReader scriptTrajectory = Common.loadTrajectoryScript();
+        final BufferedReader scriptTrajectory = Common.loadTrajectoryScript();
         while ((line = scriptTrajectory.readLine()) != null) {
           line = line.replace("${UNIQUE_ID}", model.get(Common.UNIQUE_ID, ""));
           line = line.replace("${TRAJECTORY_MAX_ACCELERATION}", getInstallation().getMaximumAccelerationStr());
           line = line.replace("${TRAJECTORY_SAMPLING_TIME}", getInstallation().getSamplingTimeStr());
-          line = line.replace("${TRAJECTORY_FIRST_WAYPOINT}", firstWaypoint);
-          line = line.replace("${TRAJECTORY_LAST_WAYPOINT}", lastWaypoint);
+          line = line.replace("${TRAJECTORY_FIRST_WAYPOINT}", Arrays.toString(treeWaypoints.getFirstWaypoint()));
+          line = line.replace("${TRAJECTORY_LAST_WAYPOINT}", Arrays.toString(treeWaypoints.getLastWaypoint()));
           //System.out.println(line);
           writer.appendLine(line);
         }
@@ -144,12 +207,12 @@ public class TrajectoryProgram implements ProgramNodeContribution {
 
   @Override
   public boolean isDefined() {
-    final List<double[]> waypoints = new ArrayList<double[]>();
-    if (!getWaypoints(waypoints, null, null, null)) {
+    final TreeWaypoints treeWaypoints = new TreeWaypoints(getRootTreeNode());
+    if (treeWaypoints.isInvalid()) {
       return false;
     }
-    String hash = model.get(Common.NODE_HASH, UUID.randomUUID().toString());
-    String currentHash = getPlanningSpecification(waypoints).getAsJson();
+    final String hash = model.get(Common.NODE_HASH, UUID.randomUUID().toString());
+    final String currentHash = getPlanningSpecification(treeWaypoints.getWaypoints()).getAsJson();
     return getInstallation().isDefined() && model.get(Common.IS_DEFINED, false) && hash.equals(currentHash);
   }
 
@@ -181,27 +244,26 @@ public class TrajectoryProgram implements ProgramNodeContribution {
       return;
     }
 
-    final List<double[]> waypoints = new ArrayList<double[]>();
-    int[] invalidChildren = new int[1];
-    int[] uninitializedChildren = new int[1];
-    int[] validChildren = new int[1];
-    getWaypoints(waypoints, invalidChildren, uninitializedChildren, validChildren);
+    final TreeWaypoints treeWaypoints = new TreeWaypoints(getRootTreeNode());
+    int invalidChildren = treeWaypoints.getNumberOfInvalidChildren();
+    int uninitializedChildren = treeWaypoints.getNumberOfUninitializedChildren();
+    int validChildren = treeWaypoints.getNumberOfValidChildren();
 
-    if (invalidChildren[0] > 0) {
-      boolean one = (invalidChildren[0] == 1);
-      Swing.error("Generate trajectory", "There " + ((one) ? "is " : "are ") + invalidChildren[0] + " invalid child" + ((one) ? "" : "ren"));
+    if (invalidChildren > 0) {
+      boolean one = (invalidChildren == 1);
+      Swing.error("Generate trajectory", "There " + ((one) ? "is " : "are ") + invalidChildren + " invalid child" + ((one) ? "" : "ren"));
       return;
     }
-    if (uninitializedChildren[0] > 0) {
-      boolean one = (uninitializedChildren[0] == 1);
-      Swing.error("Generate trajectory", "There " + ((one) ? "is " : "are ") + uninitializedChildren[0] + " uninitialized waypoint" + ((one) ? "" : "s"));
+    if (uninitializedChildren > 0) {
+      boolean one = (uninitializedChildren == 1);
+      Swing.error("Generate trajectory", "There " + ((one) ? "is " : "are ") + uninitializedChildren + " uninitialized waypoint" + ((one) ? "" : "s"));
       return;
     }
     int minNumberOfWayoints = getInstallation().getMinNumberOfWaypoints();
-    if (validChildren[0] < minNumberOfWayoints) {
-      boolean one = (validChildren[0] == 1);
-      boolean zero = (validChildren[0] == 0);
-      String msg = "There " + ((one) ? "is " : "are ") + ((zero)? "no" : ("only " + validChildren[0])) + " available waypoint" +
+    if (validChildren < minNumberOfWayoints) {
+      boolean one = (validChildren == 1);
+      boolean zero = (validChildren == 0);
+      String msg = "There " + ((one) ? "is " : "are ") + ((zero)? "no" : ("only " + validChildren)) + " available waypoint" +
                    ((one) ? "" : "s") + ", at least " + minNumberOfWayoints + " are required to compute a trajectory";
       Swing.error("Generate trajectory", msg);
       return;
@@ -210,7 +272,7 @@ public class TrajectoryProgram implements ProgramNodeContribution {
     undoRedoManager.recordChanges(new UndoableChanges() {
       @Override
       public void executeChanges() {
-        PlanningSpecification planningSpecification = getPlanningSpecification(waypoints);
+        PlanningSpecification planningSpecification = getPlanningSpecification(treeWaypoints.getWaypoints());
         model.set(Common.NODE_HASH, planningSpecification.getAsJson());
 
         String service = Common.getDefault(Common.SERVICE_GENERATE);
@@ -243,60 +305,6 @@ public class TrajectoryProgram implements ProgramNodeContribution {
     return apiProvider.getProgramAPI().getInstallationNode(ClientInstallation.class);
   }
 
-  private boolean getWaypoints(final List<double[]> waypoints, final int[] invalid, final int uninitialized[], final int[] valid) {
-    try {
-      if (waypoints != null) {
-        waypoints.clear();
-      }
-      if (invalid != null) {
-        invalid[0] = 0;
-      }
-      if (uninitialized != null) {
-        uninitialized[0] = 0;
-      }
-      if (valid != null) {
-        valid[0] = 0;
-      }
-      final TreeNode root = apiProvider.getProgramAPI().getProgramModel().getRootTreeNode(this);
-      for (TreeNode child : root.getChildren()) {
-        if (child.getProgramNode() instanceof URCapProgramNode) {
-          URCapProgramNode urcap = (URCapProgramNode) child.getProgramNode();
-          if (urcap.canGetAs(Common.ChildWaypointAPI.class)) {
-            Common.ChildWaypointAPI waypointNode = urcap.getAs(Common.ChildWaypointAPI.class);
-            if (waypointNode.getJointPositions() != null) {
-              if (waypoints != null) {
-                JointPosition[] jointPosition = waypointNode.getJointPositions().getAllJointPositions();
-                double[] waypoint = new double[jointPosition.length];
-                for (int i = 0; jointPosition.length > i; i++) {
-                  waypoint[i] = jointPosition[i].getPosition(Unit.RAD);
-                }
-                waypoints.add(waypoint);
-              }
-              if (valid != null) {
-                valid[0]++;
-              }
-            } else {
-              if (uninitialized != null) {
-                uninitialized[0]++;
-              }
-            }
-          } else {
-            if (invalid != null) {
-              invalid[0]++;
-            }
-          }
-        }
-      }
-      return true;
-    } catch (Exception e) {
-      if (invalid != null) {
-        invalid[0]++;
-      }
-      Swing.error(getTitle(), "Unexpected error while traversing the trajectory tree: " + e.getMessage());
-      return false;
-    }
-  }
-
   private PlanningSpecification getPlanningSpecification(List<double[]> waypoints) {
     String executionTime = (String) Common.getWithDefault(model, Common.TRAJECTORY_EXECUTION_TIME);
     String regularizationFactor = (String) Common.getWithDefault(model, Common.TRAJECTORY_REGULARIZATION_FACTOR);
@@ -307,6 +315,10 @@ public class TrajectoryProgram implements ProgramNodeContribution {
         .setRegularizationFactor(Double.parseDouble(regularizationFactor))
         .setBasisType(basisType[basisType.length - 1])
         .setWaypoints(waypoints);
+  }
+
+  private TreeNode getRootTreeNode() {
+    return apiProvider.getProgramAPI().getProgramModel().getRootTreeNode(this);
   }
 
   private KeyboardInputFactory getKeyboardInputFactory() {
