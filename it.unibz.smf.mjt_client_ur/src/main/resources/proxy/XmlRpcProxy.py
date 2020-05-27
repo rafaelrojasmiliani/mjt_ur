@@ -344,6 +344,7 @@ class MjtProxy:
 
 
 if __name__ == '__main__':
+    os.chdir(sys.path[0])
     mjt = MjtProxy('../urcap.properties')
     server = mjt.get_server()
     server.register_introspection_functions()

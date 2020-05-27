@@ -7,8 +7,11 @@ import com.ur.urcap.api.domain.userinteraction.keyboard.KeyboardTextInput;
 import com.ur.urcap.api.domain.value.jointposition.JointPositions;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.InputStream;
+import java.io.FileOutputStream;
 import java.nio.charset.Charset;
 import java.util.Properties;
 
@@ -77,6 +80,24 @@ public class Common {
 
   public static BufferedReader loadTrajectoryScript() {
     return loadResource(Common.class.getClassLoader().getResourceAsStream(URSCRIPT_TRAJECTORY));
+  }
+
+  public static boolean copyTo(String resourcePath, String destinationPath) {
+    try {
+      BufferedReader src = loadResource(Common.class.getClassLoader().getResourceAsStream(resourcePath));
+      BufferedWriter dst = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(destinationPath), Charset.forName("UTF-8").name()));
+      String line;
+      while ((line = src.readLine()) != null) {
+        dst.write(line);
+        dst.newLine();
+      }
+      dst.flush();
+      dst.close();
+      return true;
+    } catch (Exception e) {
+      Swing.error("Resource copy", "Cannot copy resource: " + e.getMessage());
+      return false;
+    }
   }
 
   public static String getDefault(final String key) {

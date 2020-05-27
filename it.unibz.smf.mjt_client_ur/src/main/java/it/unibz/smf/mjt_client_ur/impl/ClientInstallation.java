@@ -13,84 +13,23 @@ import com.ur.urcap.api.domain.script.ScriptWriter;
 import com.ur.urcap.api.domain.userinteraction.keyboard.KeyboardInputFactory;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Locale;
+import java.util.UUID;
 
 /*
  * https://plus.universal-robots.com/apidoc/70014/com/ur/urcap/api/contribution/installationnodecontribution.html
  */
 public class ClientInstallation implements InstallationNodeContribution {
   /*
-   * https://plus.universal-robots.com/apidoc/70014/com/ur/urcap/api/contribution/daemonservice.html
-   */
-  public static class ProxyDaemon implements DaemonService {
-    /*
-     * https://plus.universal-robots.com/apidoc/70014/com/ur/urcap/api/contribution/daemoncontribution.html
-     */
-    private DaemonContribution daemonContribution;
-
-    @Override
-    public void init(DaemonContribution daemonContribution) {
-      this.daemonContribution = daemonContribution;
-      try {
-        installResource(new URL("file:" + Common.PROXY_RESOURCE_FOLDER));
-        installResource(new URL("file:" + Common.PROXY_EXECUTABLE));
-      } catch (Exception e) {
-      }
-      start();
-    }
-
-    @Override
-    public URL getExecutable() {
-      try {
-        return new URL("file:" + Common.PROXY_EXECUTABLE);
-      } catch (Exception e) {
-        return null;
-      }
-    }
-
-    DaemonContribution.State getState() {
-      return daemonContribution.getState();
-    }
-
-    void installResource(URL url) {
-      daemonContribution.installResource(url);
-    }
-
-    void start() {
-      if(getState() == DaemonContribution.State.STOPPED) {
-        daemonContribution.start();
-      } else {
-        if(getState() == DaemonContribution.State.ERROR) {
-          Swing.error("Proxy daemon service", "Proxy daemon in error state, it cannot be started");
-        } else {
-        }
-      }
-    }
-
-    void stop() {
-      if(getState() == DaemonContribution.State.RUNNING) {
-        daemonContribution.stop();
-      } else {
-        if(getState() == DaemonContribution.State.ERROR) {
-          Swing.error("Proxy daemon service", "Proxy daemon in error state, it cannot be stopped");
-        } else {
-        }
-      }
-    }
-  }
-
-  /*
    * https://plus.universal-robots.com/apidoc/40237/com/ur/urcap/api/contribution/installation/swing/swinginstallationnodeservice.html
    */
   public static class Service implements SwingInstallationNodeService<ClientInstallation, ClientInstallationView> {
-    private ProxyDaemon proxyDaemon;
-
-    public Service() {
-      this.proxyDaemon = new ProxyDaemon();
-    }
-
     @Override
     public String getTitle(Locale locale) {
       return "MJT Client";
@@ -107,11 +46,102 @@ public class ClientInstallation implements InstallationNodeContribution {
 
     @Override
     public ClientInstallation createInstallationNode(InstallationAPIProvider apiProvider, ClientInstallationView view, DataModel model, CreationContext context) {
-      return new ClientInstallation(apiProvider, model, view, proxyDaemon);
+      return new ClientInstallation(apiProvider, model, view);
+    }
+  }
+
+  private static class ProxyDaemon {
+    private static class DaemonRunnable implements Runnable {
+      /*
+       * https://www.javaworld.com/article/2071275/when-runtime-exec---won-t.html?page=2
+       */
+      private static class StreamGobbler extends Thread {
+        final InputStream is;
+        final String type;
+
+        StreamGobbler(InputStream is, String type) {
+          this.is = is;
+          this.type = type;
+        }
+
+        public void run() {
+          try {
+            InputStreamReader isr = new InputStreamReader(is);
+            BufferedReader br = new BufferedReader(isr);
+            String line = null;
+            while ( (line = br.readLine()) != null) {
+              System.out.println(type + " " + line);
+            }
+          } catch (IOException ioe) {
+            ioe.printStackTrace();
+          }
+        }
+      }
+      private Process process = null;
+      private String pathToDaemon;
+
+      public DaemonRunnable(String pathToDaemon) {
+        this.pathToDaemon = pathToDaemon;
+      }
+
+      public void stop() {
+        process.destroy();
+      }
+
+      @Override
+      public void run() {
+        try {
+          process = Runtime.getRuntime().exec("python " + pathToDaemon);
+
+          StreamGobbler errorGobbler = new StreamGobbler(process.getErrorStream(), "[proxy daemon STDERR]");
+          StreamGobbler outputGobbler = new StreamGobbler(process.getInputStream(), "[proxy daemon STDOUT]");
+          errorGobbler.start();
+          outputGobbler.start();
+
+          System.out.println("[proxy daemon EXIT VALUE] " + process.waitFor());
+        } catch (Exception e) {
+          Swing.error("Proxy daemon service", "Unexpected error while running the proxy daemon: " + e.getMessage());
+        }
+      }
     }
 
-    ProxyDaemon getProxyDaemonService() {
-      return proxyDaemon;
+    private Thread daemonThread = null;
+    private DaemonRunnable daemonRunnable = null;
+
+    public void start(String resourcePath, String propertiesPath) {
+      stop();
+      try {
+        final String rootPath = "/tmp/mjt";
+        new File(rootPath + "/proxy").mkdirs();
+        final String pathToDaemon = rootPath + "/proxy/" + UUID.randomUUID().toString() + ".py";
+        final String pathToProperties = rootPath + "/urcap.properties";
+        Common.copyTo(resourcePath, pathToDaemon);
+        Common.copyTo(propertiesPath, pathToProperties);
+        daemonRunnable = new DaemonRunnable(pathToDaemon);
+        daemonThread = new Thread(daemonRunnable);
+        daemonThread.start();
+      } catch (Exception e) {
+        Swing.error("Proxy daemon service", "Unexpected error while starting the proxy daemon: " + e.getMessage());
+      }
+    }
+
+    public boolean isRunning() {
+      return daemonRunnable != null && daemonThread != null;
+    }
+
+    public void stop() {
+      if (daemonThread != null) {
+        if (daemonRunnable != null) {
+          daemonRunnable.stop();
+        }
+        try {
+          daemonThread.join();
+        } catch (Exception e) {
+          Swing.error("Proxy daemon service", "Unexpected error while stopping the proxy daemon: " + e.getMessage());
+        }
+      }
+      daemonRunnable = null;
+      daemonThread = null;
     }
   }
 
@@ -120,10 +150,10 @@ public class ClientInstallation implements InstallationNodeContribution {
   private final ProxyDaemon proxyDaemon;
   private final DataModel model;
 
-  public ClientInstallation(InstallationAPIProvider apiProvider, DataModel model, ClientInstallationView view, ProxyDaemon proxyDaemon) {
+  public ClientInstallation(InstallationAPIProvider apiProvider, DataModel model, ClientInstallationView view) {
     this.apiProvider = apiProvider;
     this.view = view;
-    this.proxyDaemon = proxyDaemon;
+    this.proxyDaemon = new ProxyDaemon();
     this.model = model;
     Common.setDefault(this.model, Common.SERVICE_HOSTNAME);
     Common.setDefault(this.model, Common.SERVICE_PORT_NUMBER);
@@ -135,11 +165,11 @@ public class ClientInstallation implements InstallationNodeContribution {
     Common.setDefault(this.model, Common.CONTROL_GAIN_DERIVATIVE);
     Common.setDefault(this.model, Common.CONTROL_EPS);
     Common.setDefault(this.model, Common.OPERATOR_VECTOR);
+    proxyDaemon.start(Common.PROXY_EXECUTABLE, Common.URCAP_PROPERTIES);
   }
 
   @Override
   public void openView() {
-    proxyDaemon.start();
     view.updateGUI(getKeyboardInputFactory(), model);
   }
 
