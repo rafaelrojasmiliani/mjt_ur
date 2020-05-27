@@ -35,8 +35,10 @@ public class ClientInstallation implements InstallationNodeContribution {
       this.daemonContribution = daemonContribution;
       try {
         installResource(new URL("file:" + Common.PROXY_RESOURCE_FOLDER));
+        installResource(new URL("file:" + Common.PROXY_EXECUTABLE));
       } catch (Exception e) {
       }
+      start();
     }
 
     @Override
@@ -63,7 +65,6 @@ public class ClientInstallation implements InstallationNodeContribution {
         if(getState() == DaemonContribution.State.ERROR) {
           Swing.error("Proxy daemon service", "Proxy daemon in error state, it cannot be started");
         } else {
-          Swing.info("Proxy daemon service", "Proxy daemon already started");
         }
       }
     }
@@ -75,7 +76,6 @@ public class ClientInstallation implements InstallationNodeContribution {
         if(getState() == DaemonContribution.State.ERROR) {
           Swing.error("Proxy daemon service", "Proxy daemon in error state, it cannot be stopped");
         } else {
-          Swing.info("Proxy daemon service", "Proxy daemon already stopped");
         }
       }
     }
@@ -139,6 +139,7 @@ public class ClientInstallation implements InstallationNodeContribution {
 
   @Override
   public void openView() {
+    proxyDaemon.start();
     view.updateGUI(getKeyboardInputFactory(), model);
   }
 
