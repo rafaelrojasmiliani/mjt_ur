@@ -25,7 +25,6 @@ import javax.swing.ImageIcon;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.net.URL;
 import java.util.Arrays;
 

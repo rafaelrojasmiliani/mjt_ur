@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from functools import wraps
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
@@ -204,6 +205,8 @@ class Follower:
 
         if math.sqrt(sum([e*e for e in u])) < self.eps and trajectory.current_time >= trajectory.execution_time:
             return len(u) * [float('nan')]
+
+        #print('{:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f}   {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f}   {:.2f} {:.2f} {:.2f} {:.2f} {:.2f} {:.2f}'.format(*(q + q_now + u)))
         return u
 
 
@@ -304,7 +307,7 @@ class MjtProxy:
     #  -- provide to the client the trajectory data
     @what
     def trajectory_generate(self, jsonreq):
-        #print('planning specification:\n{}'.format(jsonreq))
+        print('planning specification:\n{}'.format(json.dumps(json.loads(jsonreq), indent=4)))
         trajectory = Planner(**json.loads(jsonreq)).generate()
         print('trajectory generate: {}'.format(trajectory.unique_id))
         return trajectory.to_json()
@@ -312,7 +315,7 @@ class MjtProxy:
     # proxy service: to retrieve a trajectory from the service provided and to load it on memory
     @what
     def trajectory_load(self, unique_id, jsonreq):
-        #print('trajectory specification:\n{}'.format(jsonreq))
+        print('trajectory specification:\n{}'.format(jsonreq))
         self.trajectories[unique_id] = Trajectory(**json.loads(jsonreq))
         if unique_id != self.trajectories[unique_id].unique_id:
             del self.trajectories[unique_id]

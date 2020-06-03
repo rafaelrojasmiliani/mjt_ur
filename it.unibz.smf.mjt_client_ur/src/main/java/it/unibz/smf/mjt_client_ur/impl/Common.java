@@ -9,7 +9,7 @@ import com.ur.urcap.api.domain.value.jointposition.JointPositions;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.Charset;
 import java.util.Properties;
 
 public class Common {
@@ -65,7 +65,7 @@ public class Common {
 
   public static BufferedReader loadResource(final InputStream src) {
     try {
-      return new BufferedReader(new InputStreamReader(src, StandardCharsets.UTF_8.name()));
+      return new BufferedReader(new InputStreamReader(src, Charset.forName("UTF-8").name()));
     } catch (Exception e) {
       return null;
     }
