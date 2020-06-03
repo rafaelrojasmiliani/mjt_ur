@@ -15,7 +15,7 @@ directory | description
 `build_image.sh` | Script to download the URSim and SDK packages and to build the Docker image.
 `setup.sh` | Shell[^1] configuration file for handling of the Docker container.
 
-**NOTE**: these tools have been tested only with the URSim version `3.12.1` and UR SDK version `1.9.0`, different versions may require some adjustments on both the `build_image.sh` script and `ur.Dockerfile` file.
+**NOTE**: these tools have been tested only with the URSim version `3.13.0` and UR SDK version `1.9.0`, different versions may require some adjustments on both the `build_image.sh` script and `ur.Dockerfile` file.
 
 
 ## Dependencies

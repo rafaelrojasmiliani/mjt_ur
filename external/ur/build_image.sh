@@ -10,7 +10,7 @@ function setup_ur_sim() {
   local sim_path="URSim_Linux-${1}"
   local sim_file="${sim_path}.tar.gz"
 
-  if ! wget -c "https://s3-eu-west-1.amazonaws.com/ur-support-site/66364/${sim_file}" &>/dev/null; then
+  if ! wget -c "https://s3-eu-west-1.amazonaws.com/ur-support-site/69991/${sim_file}" &>/dev/null; then
     echo "download error."
     return 1
   fi
@@ -76,7 +76,7 @@ function build_ur_image() {
   myuid=$(id -u "${USER}")
   mygid=$(id -g "${USER}")
   mygroup=$(id -g -n "${USER}")
-  nvidia-docker build -t "ur-${USER}-image" \
+  docker build -t "ur-${USER}-image" \
     --build-arg myuser="${USER}" \
     --build-arg myuid="${myuid}" \
     --build-arg mygroup="${mygroup}" \
@@ -88,7 +88,7 @@ function build_ur_image() {
 }
 
 function setup_ur_tools () {
-  local ur_sim_version="3.12.1.90940"
+  local ur_sim_version="3.13.0.10253"
   local ur_sim_path
 
   local ur_sdk_version="1.9.0"
