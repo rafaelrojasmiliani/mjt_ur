@@ -1,0 +1,16 @@
+#mjt_trajectory_reset("${UNIQUE_ID}")
+
+movej(${TRAJECTORY_FIRST_WAYPOINT})
+
+mjt_current_time = 0.0001  # slightly larger than 0 to avoid float errors
+mjt_execution_time = mjt_trajectory_execution_time("${UNIQUE_ID}")
+u = mjt_trajectory_eval_time("${UNIQUE_ID}", mjt_current_time)
+while mjt_current_time < mjt_execution_time:
+  servoj([u[0], u[1], u[2], u[3], u[4], u[5]], 0, 0, 0.005)
+  u = mjt_trajectory_eval_time("${UNIQUE_ID}", mjt_current_time)
+  mjt_current_time = mjt_current_time + 0.005
+end
+
+movej(${TRAJECTORY_LAST_WAYPOINT})
+stopj(${TRAJECTORY_MAX_ACCELERATION})
+
