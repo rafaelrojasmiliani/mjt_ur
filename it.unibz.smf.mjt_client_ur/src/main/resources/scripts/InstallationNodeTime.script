@@ -35,3 +35,12 @@ def mjt_trajectory_eval_time(unique_id, _t):
   #textmsg("mjt_trajectory_eval: " + unique_id + ", control command: (" + to_str([u[0], u[1], u[2], u[3], u[4], u[5]]) + ")")
   return u
 end
+
+def mjt_trajectory_execution_time(unique_id):
+  #textmsg("mjt_trajectory_eval: " + unique_id + ",   current state: (" + to_str(q) + ", " + to_str(qp) + ")")
+  execution_time = mjtProxyClient.trajectory_execution_time(unique_id)
+  #textmsg("mjt_trajectory_eval: " + unique_id + ", control command: (" + to_str([u[0], u[1], u[2], u[3], u[4], u[5]]) + ")")
+  return execution_time
+end
+
+
