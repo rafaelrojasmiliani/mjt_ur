@@ -5,11 +5,24 @@ movej(${TRAJECTORY_FIRST_WAYPOINT})
 mjt_current_time = 0.0001  # slightly larger than 0 to avoid float errors
 mjt_execution_time = mjt_trajectory_execution_time("${UNIQUE_ID}")
 u = mjt_trajectory_eval_time("${UNIQUE_ID}", mjt_current_time)
-while mjt_current_time < mjt_execution_time:
-  servoj([u[0], u[1], u[2], u[3], u[4], u[5]], 0, 0, 0.005)
-  u = mjt_trajectory_eval_time("${UNIQUE_ID}", mjt_current_time)
-  mjt_current_time = mjt_current_time + 0.005
+
+thread mythread():
+  while (mjt_current_time < mjt_execution_time):
+    servoj([u[0], u[1], u[2], u[3], u[4], u[5]], 0, 0, 0.008, 0.03, 3000)
+  end
 end
+
+mythreadvar = run mythread()
+sync() # give the control to the scheduler
+
+while mjt_current_time < mjt_execution_time:
+  # This xmlrpc call should take less than 8ms
+  u = mjt_trajectory_eval_time("${UNIQUE_ID}", mjt_current_time)
+  sync() # wait the remaining time of the 8ms cycle
+  mjt_current_time = mjt_current_time + 0.008
+end
+
+kill mythreadvar
 
 movej(${TRAJECTORY_LAST_WAYPOINT})
 stopj(${TRAJECTORY_MAX_ACCELERATION})
