@@ -48,8 +48,8 @@ public class Common {
   public static final String LOGO_UNIBZ = "/media/unibz.png";
   public static final String LOGO_SMF = "/media/smf.png";
   public static final String URCAP_PROPERTIES = "/urcap.properties";
-  public static final String URSCRIPT_INSTALLATION = "/scripts/InstallationNode.script";
-  public static final String URSCRIPT_TRAJECTORY = "/scripts/TrajectoryNode.script";
+  public static final String URSCRIPT_INSTALLATION = "/scripts/InstallationNodeTime.script";
+  public static final String URSCRIPT_TRAJECTORY = "/scripts/TrajectoryNodeTime.script";
   public static final String PROXY_RESOURCE_FOLDER = "/proxy/";
   public static final String PROXY_EXECUTABLE = "/proxy/XmlRpcProxy.py";
   // -- nodes data
