@@ -44,7 +44,8 @@ ARG myuser
 ARG myuid
 ARG mygroup
 ARG mygid
-RUN groupmod -g ${mygid} ${mygroup}
+#RUN groupmod -g ${mygid} ${mygroup}
+RUN addgroup --gid ${mygid} ${mygroup}
 RUN adduser --gecos "" --disabled-password --uid ${myuid} --gid ${mygid} ${myuser}
 RUN echo "${myuser} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 

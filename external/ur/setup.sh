@@ -97,6 +97,11 @@ function ur_reborn() {
   ur_enter
 }
 
+
+function ur_mvn() {
+    nvidia-docker run --volume $(pwd):/test --user $(id -u):$(id -g) ur-rafaelrojas-image /bin/bash -c "cd test/ && mvn install"
+}
+
 # allow to execute graphical applications inside containers
 if [ -n "$SSH_CLIENT" ]; then  # ssh connection ...
   if [ -z "$DISPLAY" ]; then   # ... without X forwarding
