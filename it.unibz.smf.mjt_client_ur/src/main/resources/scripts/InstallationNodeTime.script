@@ -44,3 +44,8 @@ def mjt_trajectory_execution_time(unique_id):
 end
 
 
+thread mjt_control_thread():
+  while (mjt_current_time < mjt_execution_time):
+    servoj([mjt_u[0], mjt_u[1], mjt_u[2], mjt_u[3], mjt_u[4], mjt_u[5]], 0, 0, 0.008, 0.03, 3000)
+  end
+end
