@@ -13,17 +13,22 @@ thread mythread():
 end
 
 mythreadvar = run mythread()
-sync() # give the control to the scheduler
+sync() # give the control to the scheduler to create the new thread.
 
 while mjt_current_time < mjt_execution_time:
-  # This xmlrpc call should take less than 8ms
+  # This xmlrpc call should take less than 8ms.
+  # https://forum.universal-robots.com/t/semaphore-or-mutex/672/2
+  # Note though that only sync/sleep/move commands (commands that use "physical
+  # time" as the manual puts it) are points where your thread can yield to
+  # other threads. That means that in many cases you don’t really need critical
+  # sections and you can simply use global variables to synchronize between
+  # threads.
   u = mjt_trajectory_eval_time("${UNIQUE_ID}", mjt_current_time)
-  sync() # wait the remaining time of the 8ms cycle
   mjt_current_time = mjt_current_time + 0.008
 end
-
 kill mythreadvar
+sync()
 
-movej(${TRAJECTORY_LAST_WAYPOINT})
 stopj(${TRAJECTORY_MAX_ACCELERATION})
+movej(${TRAJECTORY_LAST_WAYPOINT})
 
