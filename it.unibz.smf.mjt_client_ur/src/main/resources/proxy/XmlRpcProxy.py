@@ -113,12 +113,23 @@ class Planner:
         # trajectory initialization (piece-wise rest-to-rest, same execution time for each polynomial)
         N = len(self.waypoints) - 1
         wp = np.array(self.waypoints)
+        T = self.execution_time
         tauv = np.array(
-            [np.linalg.norm(wp1 - wp2) for wp1, wp2 in zip(wp[:-1], wp[1:])])
-        tauv = tauv / np.sum(tauv) * self.execution_time
+            [np.linalg.norm(wp2 - wp1) for wp1, wp2 in zip(wp[:-1], wp[1:])])
+        tauv = tauv / np.sum(tauv) * T 
 
         splcalc = cSplineCalc(self.njoints, N, cBasis0010())
 
+        trajectory = splcalc.getSpline(tauv, wp)
+
+        time_array = np.arange(0.0, T, float(T)/1000.0)
+
+        pd_max = np.max(np.abs(trajectory.deriv()(time_array)))
+        pdd_max = np.max(np.abs(trajectory.deriv(2)(time_array)))
+        Tv = pd_max / self.maximum_speed * T
+        Ta = np.sqrt(pdd_max / self.maximum_acceleration) * T
+        Topt = max([Tv, Ta])
+        tauv = tauv / np.sum(tauv) * Topt
         trajectory = splcalc.getSpline(tauv, wp)
 
         del splcalc
