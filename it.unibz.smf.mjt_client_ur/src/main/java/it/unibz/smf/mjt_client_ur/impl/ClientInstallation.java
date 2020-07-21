@@ -165,7 +165,11 @@ public class ClientInstallation implements InstallationNodeContribution {
     Common.setDefault(this.model, Common.CONTROL_GAIN_DERIVATIVE);
     Common.setDefault(this.model, Common.CONTROL_EPS);
     Common.setDefault(this.model, Common.OPERATOR_VECTOR);
+
     proxyDaemon.start(Common.PROXY_EXECUTABLE, Common.URCAP_PROPERTIES);
+
+    Common.setDefault(this.model, Common.PROXY_HOSTNAME);
+    Common.setDefault(this.model, Common.PROXY_PORT_NUMBER);
   }
 
   @Override
@@ -247,6 +251,12 @@ public class ClientInstallation implements InstallationNodeContribution {
   }
 
   public Object xmlRpcRequest(String service, Object[] params) {
+      if(service.equals(Common.getDefault(Common.SERVICE_LOAD))){
+        return XMLRPCClient.request(
+            (String) Common.getWithDefault(model, Common.PROXY_HOSTNAME),
+            (String) Common.getWithDefault(model, Common.PROXY_PORT_NUMBER),
+            service, params);
+      }
     return XMLRPCClient.request(
         (String) Common.getWithDefault(model, Common.SERVICE_HOSTNAME),
         (String) Common.getWithDefault(model, Common.SERVICE_PORT_NUMBER),
