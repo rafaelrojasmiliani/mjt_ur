@@ -19,6 +19,11 @@ from gsplines import cSplineCalc
 from gsplines import cBasis1010
 from gsplines import cBasis0010
 import time
+from cvxopt import matrix
+from cvxopt.solvers import lp as linear_program
+from cvxopt.solvers import qp as quadratic_program
+import cvxopt.solvers
+
 
 
 def what(function):
@@ -63,6 +68,136 @@ class Follower:
 
         return u.tolist()
 
+
+class cGoncalvesKinematicControl(object):
+    ''' implementation of 
+            V. M. Goncalves, B. V. Adorno, A. Crosnier and P. Fraisse,
+            "Stable-by-Design Kinematic Control Based on Optimization," in IEEE
+            Transactions on Robotics, vol. 36, no. 3, pp. 644-656, June 2020, doi:
+            10.1109/TRO.2019.2963665. 
+            
+        with 
+        - Lyapunov function as the squared l2 norm of the error
+        V = \|error\|_2^2 
+        - Control contrains as joint velocity limits
+        - Function Psi chosen in order to design the closed loop behaviour
+        '''
+    def __init__(self, _njoints, _kappa, _eta, _joint_vel_lim = 10.0):
+
+        self.n_ = _njoints
+        self.kappa_ = _kappa
+        self.eta_ = _eta
+        self.joint_vel_lim_ = _joint_vel_lim
+
+        n = self.n_
+        Aun = np.vstack([np.eye(n), -np.eye(n)])
+        bun = np.array(2*n*[self.joint_vel_lim_])
+
+        Aeq = np.array(n*[0.0])
+        beq = np.array([0.0])
+        
+        self.un_const_matrix_ = matrix(Aun)
+        self.un_const_vector_ = matrix(bun)
+
+        self.eq_const_matrix_ = matrix(Aeq.reshape(1, -1))
+        self.eq_const_vector_ = matrix(beq)
+
+        Q = np.eye(n)
+        p = np.array(n*[0.0])
+
+        self.quadratic_cost_matrix_ = matrix(Q)
+        self.quadratic_cost_vector_ = matrix(p)
+
+        self.rho_ = 0.5
+
+    def psi(self, _lyap, _lyap_grad):
+        ''' 
+        _lyap: float, 
+            value of lyapunov function
+        _lyap_grad: numpy.array
+            gradient of lyapunov function w.r.t. the join positions (spatial
+            gradient)
+        '''
+        eta = self.eta_
+        kappa = self.kappa_
+        V = _lyap
+        dVdq_norm = np.linalg.norm(_lyap_grad)
+        result = eta * V * np.tanh(kappa*dVdq_norm)
+
+        return result
+
+    def get_rho_psi(self, _lyap, _lyap_grad, _lyap_dt):
+        ''' 
+        Get the value of rho to make tge problem feasible
+            _error, numpy.array
+                tracking error
+            _qd_d, numpy.array
+                desired velocity'''
+        dVdq = _lyap_grad
+        dVdt = _lyap_dt
+
+        Aun = self.un_const_matrix_
+        bun = self.un_const_vector_
+
+        result = linear_program(matrix(dVdq), Aun, bun)
+
+        assert result['status'] == 'optimal', 'ERROR ON GONCALVES: bad problem formulation'
+
+        v_star = result['x']
+
+        Psi = self.psi(_lyap, _lyap_grad)
+
+        rho_star = -(dVdq.dot(v_star)+dVdt)/Psi
+
+        rho = min(1.0, rho_star)
+
+        assert rho >= 0.0, 'ERROR ON GONCALVES: bad problem formulation'
+
+        return rho, Psi
+
+
+    def get_control(self, _error, _qd_d):
+
+        V = np.linalg.norm(_error)**2
+
+        dVdq = -2*_error
+
+        dVdt = 2*_error.dot(_qd_d)
+
+        Psi = self.psi(V, dVdq)
+        rho = self.rho_
+
+        Q = self.quadratic_cost_matrix_
+        p = self.quadratic_cost_vector_
+        Aeq = self.eq_const_matrix_
+        beq = self.eq_const_vector_
+        Aun = self.un_const_matrix_
+        bun = self.un_const_vector_
+
+        Aeq[:] = dVdq
+
+        beq[0] = -dVdt - rho*Psi
+        
+        result = quadratic_program(Q, p, Aun, bun, Aeq, beq)
+
+        if result['status'] != 'optimal':
+            rho, Psi = self.get_rho_psi(V, dVdq, dVdt)
+            beq[0] = -dVdt - rho*Psi
+            result = quadratic_program(Q, p, Aun, bun, Aeq, beq)
+            assert result['status'] == 'optimal', 'ERROR ON GONCALVES: bad problem formulation'
+
+        u = list(result['x'])
+
+        return u
+
+    def update_pars(self, _eta, _kappa, _umax):
+        self.eta_ = _eta
+        self.kappa_ = _kappa
+
+        self.joint_vel_lim_ = _umax
+        nnjoints = self.n_
+        bun = np.array(2*n*[self.joint_vel_lim_])
+        self.un_const_vector_ = matrix(bun)
 
 class Planner:
     ''' Trajectory planner example.  This class builds a trajectory.
@@ -149,8 +284,11 @@ class MjtProxy:
         self.config = dict(cp.items('mjt'))
 
         self.trajectories = {}
+        self.trajectories_deriv_ = {}
         self.trajectories_initial_time = {}
         self.follower = None
+
+        self.goncalves = cGoncalvesKinematicControl(6, 1.0, 30.0)
 
     # (internal use) custom initialization of the XMLRPC server
     def get_server(self):
@@ -164,7 +302,7 @@ class MjtProxy:
         hostname = self.config['proxy_hostname']
         port = int(self.config['proxy_port_number'])
         server = SimpleThreadXMLRPCServer(
-            (hostname, port),
+            ('0.0.0.0', port),
             requestHandler=RequestHandler,
             logRequests=False,
             allow_none=True)
@@ -195,37 +333,65 @@ class MjtProxy:
     @what
     def trajectory_load(self, unique_id, jsonreq):
         print('trajectory specification:\n{}'.format(jsonreq))
-        self.trajectories[unique_id] = json2piecewise(jsonreq)
+        q = json2piecewise(jsonreq)
+        self.trajectories[unique_id] = q
+        self.trajectories_deriv_[unique_id] = q.deriv()
         #        if unique_id != self.trajectories[unique_id].unique_id:
         #            del self.trajectories[unique_id]
         #            raise RuntimeError('trajectory load: {} has a different internal unique_id'.format(unique_id))
         #        print('trajectory load: {}'.format(unique_id))
         return True
 
+    @what
+    def trajectory_get_all(self):
+        result = []
+        for key in self.trajectories:
+            q = self.trajectories[key]
+            json_q = piecewise2json(q)
+            result.append(json_q)
+
+        #        if unique_id != self.trajectories[unique_id].unique_id:
+        #            del self.trajectories[unique_id]
+        #            raise RuntimeError('trajectory load: {} has a different internal unique_id'.format(unique_id))
+        #        print('trajectory load: {}'.format(unique_id))
+        result = piecewise2json(q)
+        return result
     # proxy service: to release a previously loaded trajectory
     @what
     def trajectory_reset(self, unique_id):
         if unique_id not in self.trajectories:
             raise RuntimeError(
                 'trajectory {} need to be loaded before resetting it')
-        self.trajectories[unique_id].reset()
-        self.trajectories_initial_time[unique_id] = time.time()
-        print('trajectory reset: {}'.format(unique_id))
+#        self.trajectories[unique_id].reset()
+#        self.trajectories_initial_time[unique_id] = time.time()
+#        print('trajectory reset: {}'.format(unique_id))
         return True
 
     # proxy service: to evaluate a trajectory and return the corresponding control command to follow it (joint velocities)
     @what
-    def trajectory_eval(self, unique_id, q_now, qd_now):
-        if not self.follower:
-            raise RuntimeError(
-                'control parameters need to be defined before evaluating any trajectory'
-            )
+    def trajectory_eval(self, unique_id, _t, q_now, qd_now):
+#        if not self.follower:
+#            raise RuntimeError(
+#                'control parameters need to be defined before evaluating any trajectory'
+#            )
         if unique_id not in self.trajectories:
             raise RuntimeError(
                 'trajectory {} need to be loaded before evaluating it'.format(
                     unique_id))
-        current_time = time.time() - self.trajectories_initial_time[unique_id]
-        return self.follower.eval(current_time, self.trajectories[unique_id], q_now, qd_now)
+        q_d = self.trajectories[unique_id](_t)[0]
+        qd_d = self.trajectories_deriv_[unique_id](_t)[0]
+
+        err = q_d - np.array(q_now)
+
+        err_d = qd_d - np.array(qd_now)
+
+        acc = 1500.0*float(np.linalg.norm(err_d, ord=np.inf))
+
+        u = self.goncalves.get_control(err, qd_d)
+
+        result = u + [acc]
+
+        return result
 
     @what
     def trajectory_eval_time(self, unique_id, _t):
@@ -251,6 +417,7 @@ class MjtProxy:
 
 if __name__ == '__main__':
     os.chdir(sys.path[0])
+    cvxopt.solvers.options['show_progress'] = False
     mjt = MjtProxy('../urcap.properties')
     server = mjt.get_server()
     server.register_introspection_functions()

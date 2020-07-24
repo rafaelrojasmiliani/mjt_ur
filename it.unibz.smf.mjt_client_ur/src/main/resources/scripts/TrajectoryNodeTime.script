@@ -4,8 +4,6 @@ movej(${TRAJECTORY_FIRST_WAYPOINT})
 
 mjt_current_time = 0.0001  # slightly larger than 0 to avoid float errors
 mjt_execution_time = mjt_trajectory_execution_time("${UNIQUE_ID}")
-mjt_u = mjt_trajectory_eval_time("${UNIQUE_ID}", mjt_current_time)
-
 
 mythreadvar = run mjt_control_thread()
 sync() # give the control to the scheduler to create the new thread.
@@ -17,12 +15,15 @@ while mjt_current_time < mjt_execution_time:
   # other threads. That means that in many cases you don’t really need critical
   # sections and you can simply use global variables to synchronize between
   # threads.
-  mjt_u = mjt_trajectory_eval_time("${UNIQUE_ID}", mjt_current_time)
+  q = get_actual_joint_positions()
+  qd = get_actual_joint_speeds()
+  mjt_u = mjt_trajectory_eval("${UNIQUE_ID}", mjt_current_time, q, qd)
   mjt_current_time = mjt_current_time + 0.008
 end
 kill mythreadvar
 sync()
+mjt_u = [0, 0, 0, 0, 0, 0, 0]
 
-stopj(${TRAJECTORY_MAX_ACCELERATION})
+stopj(10.0)
 movej(${TRAJECTORY_LAST_WAYPOINT})
 
