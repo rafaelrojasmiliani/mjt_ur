@@ -177,25 +177,29 @@ class cGoncalvesKinematicControl(object):
         Aeq[:] = dVdq
 
         beq[0] = -dVdt - rho*Psi
-        
-        result = quadratic_program(Q, p, Aun, bun, Aeq, beq)
-
-        if result['status'] != 'optimal':
-            rho, Psi = self.get_rho_psi(V, dVdq, dVdt)
-            beq[0] = -dVdt - rho*Psi
+       
+        try:
             result = quadratic_program(Q, p, Aun, bun, Aeq, beq)
-            assert result['status'] == 'optimal', 'ERROR ON GONCALVES: bad problem formulation'
+            u = list(result['x'])
+        except:
+            rho, Psi = self.get_rho_psi(V, dVdq, dVdt)
+            self.rho_ = rho
+            beq[0] = -dVdt - rho*Psi
+            try:
+                result = quadratic_program(Q, p, Aun, bun, Aeq, beq)
+                u = list(result['x'])
+            except:
+                u = (- 0.5 * _error + _qd_d).tolist()
 
-        u = list(result['x'])
 
         return u
 
-    def update_pars(self, _eta, _kappa, _umax):
+    def set_parameters(self, _eta, _kappa, _umax):
         self.eta_ = _eta
         self.kappa_ = _kappa
 
         self.joint_vel_lim_ = _umax
-        nnjoints = self.n_
+        n= self.n_
         bun = np.array(2*n*[self.joint_vel_lim_])
         self.un_const_vector_ = matrix(bun)
 
@@ -311,10 +315,8 @@ class MjtProxy:
 
     # proxy service: to obtain from the client trajectory following control parameters, it is mandatory to call this method before trajectory_eval
     @what
-    def control_parameters(self, Kp, Kd, u_max, eps):
-        self.follower = Follower(Kp, Kd, u_max, eps)
-        print('control parameters updated: Kp={}, Kd={}, u_max={}, eps={}'.
-              format(Kp, Kd, u_max, eps))
+    def control_parameters(self, _eta, _kappa, _u_max, eps):
+        self.goncalves.set_parameters(_eta, _kappa, _u_max)
         return True
 
     # mock of the service provider: to generate a trajectory based on the planning specifications provided by the URCap
@@ -369,7 +371,7 @@ class MjtProxy:
 
     # proxy service: to evaluate a trajectory and return the corresponding control command to follow it (joint velocities)
     @what
-    def trajectory_eval(self, unique_id, _t, q_now, qd_now):
+    def trajectory_eval(self, unique_id, _t, q_now, qd_now, _scalling=1.0):
 #        if not self.follower:
 #            raise RuntimeError(
 #                'control parameters need to be defined before evaluating any trajectory'
@@ -379,22 +381,24 @@ class MjtProxy:
                 'trajectory {} need to be loaded before evaluating it'.format(
                     unique_id))
         q_d = self.trajectories[unique_id](_t)[0]
-        qd_d = self.trajectories_deriv_[unique_id](_t)[0]
+        qd_d = self.trajectories_deriv_[unique_id](_t)[0]*_scalling
 
         err = q_d - np.array(q_now)
 
         err_d = qd_d - np.array(qd_now)
 
-        acc = 1500.0*float(np.linalg.norm(err_d, ord=np.inf))
+        acc = 10000.0*float(np.linalg.norm(err_d, ord=np.inf))
 
-        u = self.goncalves.get_control(err, qd_d)
+        # u = self.goncalves.get_control(err, qd_d)
+
+        u = (-0.05*err + qd_d).tolist()
 
         result = u + [acc]
 
         return result
 
     @what
-    def trajectory_eval_time(self, unique_id, _t):
+    def trajectory_get_desired_position(self, unique_id, _t):
         ''' Evaluates the trajectory unique_id at time t and returns the
         desired joints' position.'''
         if unique_id not in self.trajectories:
@@ -402,6 +406,17 @@ class MjtProxy:
                 'trajectory {} need to be loaded before evaluating it'.format(
                     unique_id))
         q = self.trajectories[unique_id](_t)[0]
+        return q.tolist()
+
+    @what
+    def trajectory_get_desired_velocity(self, unique_id, _t):
+        ''' Evaluates the trajectory unique_id at time t and returns the
+        desired joints' position.'''
+        if unique_id not in self.trajectories:
+            raise RuntimeError(
+                'trajectory {} need to be loaded before evaluating it'.format(
+                    unique_id))
+        q = self.trajectories_deriv_[unique_id](_t)[0]
         return q.tolist()
 
     @what
