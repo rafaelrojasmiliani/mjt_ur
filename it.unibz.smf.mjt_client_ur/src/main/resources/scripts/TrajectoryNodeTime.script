@@ -17,8 +17,8 @@ while mjt_current_time < mjt_execution_time:
   # threads.
   q = get_actual_joint_positions()
   qd = get_actual_joint_speeds()
-  mjt_u = mjt_trajectory_eval("${UNIQUE_ID}", mjt_current_time, q, qd)
-  mjt_current_time = mjt_current_time + 0.008
+  mjt_u = mjt_trajectory_eval("${UNIQUE_ID}", mjt_current_time, q, qd, Custom_Speed)
+  mjt_current_time = mjt_current_time + 0.008 * Custom_Speed
 end
 kill mythreadvar
 sync()
