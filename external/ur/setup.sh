@@ -14,18 +14,18 @@ export myhost="ur-${USER}-container"
 export mygroup="$(id -g -n ${USER})"
 
 function ur_clean () {
-  nvidia-docker ps -a |awk '/ur-.*-image.*Exited/ { print $1 }'|xargs nvidia-docker rm
-  nvidia-docker image prune
+  docker ps -a |awk '/ur-.*-image.*Exited/ { print $1 }'|xargs docker rm
+  docker image prune
 }
 
 function ur_stop() {
-  nvidia-docker stop "${myhost}"
-  nvidia-docker rm "${myhost}"
+  docker stop "${myhost}"
+  docker rm "${myhost}"
 }
 
 function ur_start() {
   # grab the container status
-  container=$(nvidia-docker inspect -f '{{.State.Pid}}' ${myhost} 2>/dev/null)
+  container=$(docker inspect -f '{{.State.Pid}}' ${myhost} 2>/dev/null)
   code=$?
   run=0
 
@@ -35,8 +35,8 @@ function ur_start() {
     run=1
   else
     # verify its image version
-    latest=$(nvidia-docker inspect -f "{{.Id}}" ${myimage%:*})
-    current=$(nvidia-docker inspect -f "{{.Image}}" ${myhost})
+    latest=$(docker inspect -f "{{.Id}}" ${myimage%:*})
+    current=$(docker inspect -f "{{.Image}}" ${myhost})
     if [ "$latest" != "$current" ]; then
       echo "a new image version has been released."
       echo "do you wish to update the container image?"
@@ -57,7 +57,7 @@ function ur_start() {
 
   # need to create the container?
   if [ "$run" -eq "1" ]; then
-    nvidia-docker run -d -it \
+    docker run -d -it \
       -v "/tmp/.X11-unix:/tmp/.X11-unix:rw" \
       -v "/home/${USER}/.ssh:/home/${USER}/.ssh:ro" \
       --env="USER" --env="DISPLAY" \
@@ -66,12 +66,12 @@ function ur_start() {
       ${myimage} bin/bash
 
     # get container pid
-    container=$(nvidia-docker inspect -f '{{.State.Pid}}' "${myhost}" 2>/dev/null)
+    container=$(docker inspect -f '{{.State.Pid}}' "${myhost}" 2>/dev/null)
   fi
 
   # does the container have been stopped?
   if [ "$container" -eq "0" ]; then
-    nvidia-docker start "${myhost}"
+    docker start "${myhost}"
   fi
 }
 
@@ -84,7 +84,7 @@ function ur_exec () {
     ur_start
 
     # spawn a new process inside the container
-    nvidia-docker exec --user="$USER:$mygroup" --workdir "/home/$USER" -it "${myhost}" "$@"
+    docker exec --user="$USER:$mygroup" --workdir "/home/$USER" -it "${myhost}" "$@"
   fi
 }
 
@@ -99,15 +99,15 @@ function ur_reborn() {
 
 
 function ur_mvn() {
-    nvidia-docker run --volume $(pwd):/test --user $(id -u):$(id -g) ${myimage} /bin/bash -c "cd test/ && mvn install"
+    docker run --volume $(pwd):/test --user $(id -u):$(id -g) ${myimage} /bin/bash -c "cd test/ && mvn install"
 }
 
 # allow to execute graphical applications inside containers
-if [ -n "$SSH_CLIENT" ]; then  # ssh connection ...
-  if [ -z "$DISPLAY" ]; then   # ... without X forwarding
-    export DISPLAY=$(who|awk '$2 ~ /tty/ { print $5 }'|tr -d '()')
-  fi
-fi
+#if [ -n "$SSH_CLIENT" ]; then  # ssh connection ...
+#  if [ -z "$DISPLAY" ]; then   # ... without X forwarding
+#    export DISPLAY=$(who|awk '$2 ~ /tty/ { print $5 }'|tr -d '()')
+#  fi
+#fi
 
 # allow container to connect the X server
 #xhost +local:root >/dev/null
