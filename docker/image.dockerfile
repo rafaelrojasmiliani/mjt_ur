@@ -2,6 +2,7 @@
 # in order to be ahble to test this library
 FROM ubuntu:18.04
 
+SHELL ["bash", "-c"]
 
 RUN apt-get update &&  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -o Dpkg::Options::="--force-confnew" \
                     python3-pip git iputils-ping net-tools netcat screen build-essential lsb-release gnupg2 curl \
@@ -15,10 +16,16 @@ RUN apt-get update &&  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-in
         && pip3 install setuptools matplotlib Mosek scipy quadpy six cython \
         && git clone https://github.com/mechmotum/cyipopt.git cyipopt \### --- Install cyipopt
         && cd /cyipopt && python3 setup.py build \
-        && cd /cyipopt && python3 setup.py install
-        && echo "export PATH=/opt/openrobots/bin:$PATH" >> /etc/bash.bashrc
-        && echo "export PKG_CONFIG_PATH=/opt/openrobots/lib/pkgconfig:$PKG_CONFIG_PATH" >> /etc/bash.bashrc
-        && echo "export LD_LIBRARY_PATH=/opt/openrobots/lib:$LD_LIBRARY_PATH" >> /etc/bash.bashrc
-        && echo "export PYTHONPATH=/opt/openrobots/lib/python3.6/site-packages:$PYTHONPATH" >> /etc/bash.bashrc
-        && echo "export CMAKE_PREFIX_PATH=/opt/openrobots:$CMAKE_PREFIX_PATH" >> /etc/bash.bashrc
-WORKDIR /path_consistent_stop
+        && cd /cyipopt && python3 setup.py install \
+        && echo "export PATH=/opt/openrobots/bin:$PATH" >> /etc/bash.bashrc \
+        && echo "export PKG_CONFIG_PATH=/opt/openrobots/lib/pkgconfig:$PKG_CONFIG_PATH" >> /etc/bash.bashrc \
+        && echo "export LD_LIBRARY_PATH=/opt/openrobots/lib:$LD_LIBRARY_PATH" >> /etc/bash.bashrc \
+        && echo "export PYTHONPATH=/opt/openrobots/lib/python3.6/site-packages:$PYTHONPATH" >> /etc/bash.bashrc \
+        && echo "export CMAKE_PREFIX_PATH=/opt/openrobots:$CMAKE_PREFIX_PATH" >> /etc/bash.bashrc \
+        && mkdir /workspace
+
+COPY modules /workspace/
+COPY services /workspace/
+
+
+WORKDIR /workspace
