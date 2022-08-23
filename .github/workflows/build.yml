@@ -14,7 +14,10 @@ jobs:
       - name: Script
         shell: bash
         run: |
-          cd external/ur && bash build_image.sh && source setup.sh
+          cd external/ur && bash build_image.sh
+          echo --------
+          source setup.sh
+          echo --------
           cd ../../it.unibz.smf.mjt_client_ur && ur_mvn
 
       - name: Artifact
