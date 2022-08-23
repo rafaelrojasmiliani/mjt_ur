@@ -99,7 +99,7 @@ function ur_reborn() {
 
 
 function ur_mvn() {
-    nvidia-docker run --volume $(pwd):/test --user $(id -u):$(id -g) ur-rafaelrojas-image /bin/bash -c "cd test/ && mvn install"
+    nvidia-docker run --volume $(pwd):/test --user $(id -u):$(id -g) ${myimage} /bin/bash -c "cd test/ && mvn install"
 }
 
 # allow to execute graphical applications inside containers

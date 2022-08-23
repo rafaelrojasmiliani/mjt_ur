@@ -1,4 +1,5 @@
 global mjtProxyClient = rpc_factory("xmlrpc", "${PROXY_URL}")
+global Custom_Speed = 1.0
 
 def mjt_control_parameters(Kp, Kd, u_max, eps):
   result = mjtProxyClient.control_parameters(Kp, Kd, u_max, eps)

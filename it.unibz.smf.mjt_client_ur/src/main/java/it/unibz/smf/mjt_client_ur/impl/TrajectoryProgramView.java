@@ -27,8 +27,8 @@ public class TrajectoryProgramView implements SwingProgramNodeView<TrajectoryPro
   public TrajectoryProgramView(Style style) {
     this.style = style;
     this.nodeName = new Swing.Field(Common.NODE_ID, "Trajectory node name", this.style);
-    this.executionTime = new Swing.Field(Common.TRAJECTORY_EXECUTION_TIME, "Execution time (minimum) [sec]", this.style);
-    this.regularizationFactor = new Swing.Field(Common.TRAJECTORY_REGULARIZATION_FACTOR, "Regularization factor (in range [0.0, 1.0])", this.style);
+    this.executionTime = new Swing.Field(Common.TRAJECTORY_EXECUTION_TIME, "Indicative execution time (25 is in general good) [sec]", this.style);
+    this.regularizationFactor = new Swing.Field(Common.TRAJECTORY_REGULARIZATION_FACTOR, "Regularization factor (greater than 0.001)", this.style);
     this.basisType = new Swing.Menu(Common.TRAJECTORY_BASIS_TYPE, "Polynomial basis type", this.style);
     this.generateTrajectory = new Swing.Button("Generate trajectory", this.style);
     this.clearTrajectory = new Swing.Button("Clear trajectory", this.style);
@@ -60,7 +60,7 @@ public class TrajectoryProgramView implements SwingProgramNodeView<TrajectoryPro
   public void updateGUI(final KeyboardInputFactory keyboardInputFactory, final DataModel model, final UndoRedoManager undoRedoManager, final ActionListener[] listeners) {
     nodeName.update(model, Common.getKeyboardInput(keyboardInputFactory, new Validation.NonEmpty("program node name")));
     executionTime.update(model, Common.getKeyboardInput(keyboardInputFactory, new Validation.PositiveReal("execution time")));
-    regularizationFactor.update(model, Common.getKeyboardInput(keyboardInputFactory, new Validation.BoundedReal("regularization factor", 0.0, 1.0)));
+    regularizationFactor.update(model, Common.getKeyboardInput(keyboardInputFactory, new Validation.BoundedReal("regularization factor", 0.001, 1.0e20)));
     basisType.update(model, undoRedoManager);
     generateTrajectory.update(null, listeners[0]);
     clearTrajectory.update(null, listeners[1]);

@@ -235,12 +235,12 @@ public class TrajectoryProgram implements ProgramNodeContribution {
 
     try {
       double regularizationFactor = Double.parseDouble(model.get(Common.TRAJECTORY_REGULARIZATION_FACTOR, ""));
-      if (regularizationFactor < 0.0 || regularizationFactor > 1.0) {
-        Swing.error("Generate trajectory", "Invalid regularization factor: must be a positive number in range [0.0, 1.0]");
+      if (regularizationFactor < 0.0) {
+        Swing.error("Generate trajectory", "Invalid regularization factor: must be a positive number");
         return;
       }
     } catch(Exception e) {
-      Swing.error("Generate trajectory", "Invalid regularization factor: must be a positive number in range [0.0, 1.0]");
+      Swing.error("Generate trajectory", "Invalid regularization factor: must be a positive number");
       return;
     }
 
