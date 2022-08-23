@@ -13,8 +13,14 @@ jobs:
 
       - name: Script
         run: |
-          cd external/ur && bash build_image.sh
+          cd external/ur && bash build_image.sh && source setup.sh
+          cd ../../it.unibz.smf.mjt_client_ur && ur_mvn
 
+      - name: Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: my-artifact
+          path: it.unibz.smf.mjt_client_ur/target/mjt_noether_client_ur-1.0-SNAPSHOT.urcap
 #      - name: Get changed files using defaults
 #        id: changed-files
 #        uses: tj-actions/changed-files@v17.2
