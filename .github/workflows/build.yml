@@ -1,0 +1,32 @@
+name: compilation
+on: push
+jobs:
+  deploy:
+    name: build image
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@main
+        with:
+          fetch-depth: 2
+          submodules: recursive
+
+      - name: Script
+        run: |
+          cd external/ur && bash build_image.sh
+
+#      - name: Get changed files using defaults
+#        id: changed-files
+#        uses: tj-actions/changed-files@v17.2
+#      - name: Login to DockerHub
+#        uses: docker/login-action@v1
+#        with:
+#          username: ${{ secrets.DOCKER_USERNAME }}
+#          password: ${{ secrets.DOCKER_PASSWORD }}
+#
+#      - name: build and push
+#        uses: docker/build-push-action@v2
+#        with:
+#          tags: ${{ matrix.docker_image.image_name }}
+#          file: ${{ matrix.docker_image.file_name }}
+#          push: true
