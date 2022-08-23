@@ -3,11 +3,11 @@
 # docker container handling inspired from:
 #   https://gitlab.inf.unibz.it/smartminifactory/workstation-common
 
-whereami=$(grep docker /proc/1/cgroup)
-if [ ! -z "$whereami" ]; then
-  # script not loaded inside containers
-  return
-fi
+#whereami=$(grep docker /proc/1/cgroup)
+#if [ ! -z "$whereami" ]; then
+#  # script not loaded inside containers
+#  return
+#fi
 
 export myimage="ur-${USER}-image:latest"
 export myhost="ur-${USER}-container"
@@ -110,7 +110,7 @@ if [ -n "$SSH_CLIENT" ]; then  # ssh connection ...
 fi
 
 # allow container to connect the X server
-xhost +local:root >/dev/null
+#xhost +local:root >/dev/null
 
 # export functions only outside container
 export -f ur_clean
