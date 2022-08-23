@@ -15,9 +15,7 @@ jobs:
         shell: bash
         run: |
           cd external/ur && bash build_image.sh
-          echo --------
           source setup.sh
-          echo --------
           cd ../../it.unibz.smf.mjt_client_ur && ur_mvn
 
       - name: Upload binaries to release
