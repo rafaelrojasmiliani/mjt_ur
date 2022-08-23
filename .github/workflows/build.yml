@@ -13,8 +13,8 @@ jobs:
 
       - name: Script
         run: |
-          cd external/ur && bash build_image.sh && source setup.sh
-          cd ../../it.unibz.smf.mjt_client_ur && ur_mvn
+          cd external/ur && bash build_image.sh #&& source setup.sh
+          #cd ../../it.unibz.smf.mjt_client_ur && ur_mvn
 
       - name: Artifact
         uses: actions/upload-artifact@v3
