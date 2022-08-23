@@ -20,11 +20,15 @@ jobs:
           echo --------
           cd ../../it.unibz.smf.mjt_client_ur && ur_mvn
 
-      - name: Artifact
-        uses: actions/upload-artifact@v3
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: my-artifact
-          path: it.unibz.smf.mjt_client_ur/target/mjt_noether_client_ur-1.0-SNAPSHOT.urcap
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: it.unibz.smf.mjt_client_ur/target/mjt_noether_client_ur-1.0-SNAPSHOT.urcap
+          asset_name: mjt_noether_client_ur-1.0-SNAPSHOT.urcap
+          tag: package
+          overwrite: true
+          body: "Debian pack"
 #      - name: Get changed files using defaults
 #        id: changed-files
 #        uses: tj-actions/changed-files@v17.2
