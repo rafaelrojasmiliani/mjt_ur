@@ -113,9 +113,9 @@ fi
 #xhost +local:root >/dev/null
 
 # export functions only outside container
-export -f ur_clean
-export -f ur_stop
-export -f ur_start
-export -f ur_exec
-export -f ur_enter
-export -f ur_reborn
+#export  ur_clean
+#export  ur_stop
+#export  ur_start
+#export  ur_exec
+#export  ur_enter
+#export  ur_reborn
