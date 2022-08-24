@@ -2,7 +2,7 @@ name: compilation
 on: push
 jobs:
   deploy:
-    name: build image
+    name: Build URCAP and Server Image
     runs-on: ubuntu-latest
     steps:
       - name: checkout code
@@ -19,7 +19,7 @@ jobs:
             it.unibz.smf.mjt_client_ur/*
             external/*
 
-      - name: Script
+      - name: Build URCAP
         if: steps.urcap-change.outputs.any_changed == 'true'
         shell: bash
         run: |

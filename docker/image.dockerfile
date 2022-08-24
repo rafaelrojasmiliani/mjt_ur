@@ -10,10 +10,10 @@ RUN apt-get update &&  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-in
         && curl http://robotpkg.openrobots.org/packages/debian/robotpkg.key | apt-key add - \
         && apt-get update \
         && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -o Dpkg::Options::="--force-confnew" \
-                    robotpkg-py36-pinocchio python3-sympy coinor-libipopt-dev sudo \
+                    coinor-libipopt-dev sudo \
                     build-essential pkg-config git \
                     liblapack-dev liblapack3 libopenblas-base libopenblas-dev libgfortran-7-dev python3-tk \
-        && pip3 install setuptools matplotlib Mosek scipy quadpy six cython \
+        && pip3 install setuptools matplotlib scipy quadpy six cython sympy\
         && git clone https://github.com/mechmotum/cyipopt.git cyipopt \
         && cd /cyipopt && python3 setup.py build \
         && cd /cyipopt && python3 setup.py install \
