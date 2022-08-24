@@ -77,11 +77,7 @@ class cMjtServer(cGplinesOptXMLRPCServer):
     def trajectory_generate(self, _jsonreq):
 
         json_dict = json.loads(_jsonreq)
-        for i in json_dict:
-            print(i)
-            print(json_dict[i])
-            print(type(json_dict[i]))
-            print('---------------')
+
         wpvec = np.array(json_dict['waypoints'])
         unique_id = json_dict['unique_id']
 

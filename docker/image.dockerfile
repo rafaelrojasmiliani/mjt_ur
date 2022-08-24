@@ -13,7 +13,7 @@ RUN apt-get update &&  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-in
                     coinor-libipopt-dev sudo \
                     build-essential pkg-config git \
                     liblapack-dev liblapack3 libopenblas-base libopenblas-dev libgfortran-7-dev python3-tk \
-        && pip3 install setuptools matplotlib scipy quadpy six cython sympy\
+        && pip3 install setuptools matplotlib scipy quadpy six cython sympy numba \
         && git clone https://github.com/mechmotum/cyipopt.git cyipopt \
         && cd /cyipopt && python3 setup.py build \
         && cd /cyipopt && python3 setup.py install \
