@@ -21,8 +21,8 @@ public class Common {
   public static final String SERVICE_HOSTNAME = "service_hostname";
   public static final String SERVICE_PORT_NUMBER = "service_port_number";
   // -- proxy info
-  public static final String PROXY_HOSTNAME = "proxy_hostname";
-  public static final String PROXY_PORT_NUMBER = "proxy_port_number";
+  public static final String PROXY_HOSTNAME = "service_hostname";
+  public static final String PROXY_PORT_NUMBER = "service_port_number";
   // -- services names
   public static final String SERVICE_RPC_PATH = "service_rpc_path";
   public static final String SERVICE_GENERATE = "service_generate";

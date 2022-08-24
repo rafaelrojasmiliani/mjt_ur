@@ -265,8 +265,8 @@ public class ClientInstallation implements InstallationNodeContribution {
 
   public String getProxyURL() throws MalformedURLException {
     return XMLRPCClient.getServerURL(
-        Common.getDefault(Common.SERVICE_HOSTNAME),
-        Common.getDefault(Common.SERVICE_PORT_NUMBER)).toString();
+        Common.getDefault(this.view.hostname),
+        Common.getDefault(this.view.portNumber)).toString();
   }
 
   private KeyboardInputFactory getKeyboardInputFactory() {
