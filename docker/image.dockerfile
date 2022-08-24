@@ -14,7 +14,7 @@ RUN apt-get update &&  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-in
                     build-essential pkg-config git \
                     liblapack-dev liblapack3 libopenblas-base libopenblas-dev libgfortran-7-dev python3-tk \
         && pip3 install setuptools matplotlib Mosek scipy quadpy six cython \
-        && git clone https://github.com/mechmotum/cyipopt.git cyipopt \### --- Install cyipopt
+        && git clone https://github.com/mechmotum/cyipopt.git cyipopt \
         && cd /cyipopt && python3 setup.py build \
         && cd /cyipopt && python3 setup.py install \
         && echo "export PATH=/opt/openrobots/bin:$PATH" >> /etc/bash.bashrc \
