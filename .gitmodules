@@ -15,7 +15,7 @@
 	url = https://github.com/apache/commons-validator.git
 [submodule "modules/gsplines"]
 	path = modules/gsplines
-	url = https://github.com/rafaelrojasmiliani/gsplines.git
+    url = https://github.com/rafaelrojasmiliani/gsplines.git
 [submodule "modules/gspline_optimizer"]
 	path = modules/gspline_optimizer
 	url = https://github.com/rafaelrojasmiliani/gspline_optimizer.git
