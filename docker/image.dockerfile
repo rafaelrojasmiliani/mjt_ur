@@ -5,7 +5,7 @@ FROM ubuntu:20.04
 SHELL ["bash", "-c"]
 
 RUN apt-get update &&  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends -o Dpkg::Options::="--force-confnew" \
-                    python3-pip git iputils-ping net-tools netcat screen build-essential lsb-release gnupg2 curl \
+                    python3-pip git iputils-ping net-tools netcat screen build-essential lsb-release gnupg2 curl python3-dev gfortran \
         && echo "deb [arch=amd64] http://robotpkg.openrobots.org/packages/debian/pub $(lsb_release -cs) robotpkg" | tee /etc/apt/sources.list.d/robotpkg.list \
         && curl http://robotpkg.openrobots.org/packages/debian/robotpkg.key | apt-key add - \
         && apt-get update \
