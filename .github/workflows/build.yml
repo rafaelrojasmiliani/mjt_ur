@@ -18,7 +18,16 @@ jobs:
           source setup.sh
           cd ../../it.unibz.smf.mjt_client_ur && ur_mvn
 
-      - name: Upload binaries to release
+      - name: Get URCAP Changes
+        id: urcap-change
+        uses: tj-actions/changed-files@v17.2
+        with:
+          files: |
+            it.unibz.smf.mjt_client_ur/*
+            external/*
+
+      - name: Create URCAP
+        if: steps.urcap-change.outputs.any_changed == 'true'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -27,18 +36,26 @@ jobs:
           tag: package
           overwrite: true
           body: "Debian pack"
-#      - name: Get changed files using defaults
-#        id: changed-files
-#        uses: tj-actions/changed-files@v17.2
-#      - name: Login to DockerHub
-#        uses: docker/login-action@v1
-#        with:
-#          username: ${{ secrets.DOCKER_USERNAME }}
-#          password: ${{ secrets.DOCKER_PASSWORD }}
-#
-#      - name: build and push
-#        uses: docker/build-push-action@v2
-#        with:
-#          tags: ${{ matrix.docker_image.image_name }}
-#          file: ${{ matrix.docker_image.file_name }}
-#          push: true
+
+      - name: Get Server Changes
+        id: server-change
+        uses: tj-actions/changed-files@v17.2
+        with:
+          files: |
+            docker/*
+            modules/*
+            services/*
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push server image
+        #if: steps.server-change.outputs.any_changed == 'true'
+        uses: docker/build-push-action@v2
+        with:
+          tags: "rafa606/mjt-ur-server"
+          file: "docker/image.dockerfile"
+          push: true
