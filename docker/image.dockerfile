@@ -1,6 +1,6 @@
 # This file tells docker what image must be created
 # in order to be ahble to test this library
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 SHELL ["bash", "-c"]
 
