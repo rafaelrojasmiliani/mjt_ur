@@ -11,13 +11,6 @@ jobs:
           fetch-depth: 2
           submodules: recursive
 
-      - name: Script
-        shell: bash
-        run: |
-          cd external/ur && bash build_image.sh
-          source setup.sh
-          cd ../../it.unibz.smf.mjt_client_ur && ur_mvn
-
       - name: Get URCAP Changes
         id: urcap-change
         uses: tj-actions/changed-files@v17.2
@@ -26,7 +19,15 @@ jobs:
             it.unibz.smf.mjt_client_ur/*
             external/*
 
-      - name: Create URCAP
+      - name: Script
+        if: steps.urcap-change.outputs.any_changed == 'true'
+        shell: bash
+        run: |
+          cd external/ur && bash build_image.sh
+          source setup.sh
+          cd ../../it.unibz.smf.mjt_client_ur && ur_mvn
+
+      - name: Push URCAP to releases
         if: steps.urcap-change.outputs.any_changed == 'true'
         uses: svenstaro/upload-release-action@v2
         with:
@@ -35,7 +36,7 @@ jobs:
           asset_name: mjt_noether_client_ur-1.0-SNAPSHOT.urcap
           tag: package
           overwrite: true
-          body: "Debian pack"
+          body: "URCAP"
 
       - name: Get Server Changes
         id: server-change
