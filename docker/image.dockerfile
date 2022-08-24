@@ -24,8 +24,8 @@ RUN apt-get update &&  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-in
         && echo "export CMAKE_PREFIX_PATH=/opt/openrobots:$CMAKE_PREFIX_PATH" >> /etc/bash.bashrc \
         && mkdir /workspace
 
-COPY modules /workspace/
-COPY services /workspace/
+COPY modules /workspace/modules
+COPY services /workspace/services
 
 
 WORKDIR /workspace
