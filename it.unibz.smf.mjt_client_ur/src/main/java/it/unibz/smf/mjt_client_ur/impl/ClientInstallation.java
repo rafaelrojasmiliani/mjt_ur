@@ -253,8 +253,8 @@ public class ClientInstallation implements InstallationNodeContribution {
   public Object xmlRpcRequest(String service, Object[] params) {
       if(service.equals(Common.getDefault(Common.SERVICE_LOAD))){
         return XMLRPCClient.request(
-            (String) Common.getWithDefault(model, Common.PROXY_HOSTNAME),
-            (String) Common.getWithDefault(model, Common.PROXY_PORT_NUMBER),
+            (String) Common.getWithDefault(model, Common.SERVICE_HOSTNAME),
+            (String) Common.getWithDefault(model, Common.SERVICE_PORT_NUMBER),
             service, params);
       }
     return XMLRPCClient.request(
